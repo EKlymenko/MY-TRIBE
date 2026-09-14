@@ -1,0 +1,26 @@
+[
+  {
+    "width": 390,
+    "route": "",
+    "overflow": false,
+    "broken": []
+  },
+  {
+    "width": 390,
+    "route": "my-tribe/",
+    "overflow": false,
+    "broken": []
+  },
+  {
+    "width": 1440,
+    "route": "",
+    "overflow": false,
+    "broken": []
+  },
+  {
+    "width": 1440,
+    "route": "my-tribe/",
+    "overflow": false,
+    "broken": []
+  }
+]
