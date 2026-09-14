@@ -7,28 +7,27 @@ on:
       - 'site-source/**'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Discover official logo assets
+      - run: pip install beautifulsoup4 playwright
+      - run: python scripts/build.py
+      - run: python -m playwright install --with-deps chromium
+      - run: |
+          mkdir -p checks
+          python -m http.server 8000 > /tmp/site-server.log 2>&1 &
+          python scripts/check.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-desktop-mobile-checks
+          path: checks/
+      - name: Save checked website
         run: |
-          python - <<'PY'
-          import urllib.request,re
-          from urllib.parse import urljoin
-          urls=['https://www.globallogic.com/','https://www.creatio.com/','https://www.atriabrokers.com/','https://xql.group/','https://www.avenga.com/','https://www.trustonic.com/','https://www.bsh-group.com/','https://sunsoft.ua/']
-          for u in urls:
-              print('\nSOURCE',u)
-              try:
-                  req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0'})
-                  s=urllib.request.urlopen(req,timeout=25).read().decode('utf-8',errors='replace')
-                  seen=set()
-                  for tag in re.findall(r'<(?:img|source)\b[^>]*>',s,re.I):
-                      if 'logo' in tag.lower():
-                          for a in re.findall(r'(?:src|data-src)=["\x27]([^"\x27]+)',tag):
-                              v=urljoin(u,a)
-                              if v not in seen: print(v);seen.add(v)
-              except Exception as e: print(type(e).__name__,str(e))
-          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html my-tribe Jane_My_Tribe_Stage_1.html assets checks/results.json
+          git diff --cached --quiet || git commit -m "Restore approved My Tribe page and verified standalone export"
+          git push
