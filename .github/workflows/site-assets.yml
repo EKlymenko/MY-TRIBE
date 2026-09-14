@@ -1,0 +1,34 @@
+name: Site asset preparation
+on:
+  push:
+    paths:
+      - '.github/workflows/site-assets.yml'
+      - 'scripts/**'
+      - 'site-source/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Discover official logo assets
+        run: |
+          python - <<'PY'
+          import urllib.request,re
+          from urllib.parse import urljoin
+          urls=['https://www.globallogic.com/','https://www.creatio.com/','https://www.atriabrokers.com/','https://xql.group/','https://www.avenga.com/','https://www.trustonic.com/','https://www.bsh-group.com/','https://sunsoft.ua/']
+          for u in urls:
+              print('\nSOURCE',u)
+              try:
+                  req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0'})
+                  s=urllib.request.urlopen(req,timeout=25).read().decode('utf-8',errors='replace')
+                  seen=set()
+                  for tag in re.findall(r'<(?:img|source)\b[^>]*>',s,re.I):
+                      if 'logo' in tag.lower():
+                          for a in re.findall(r'(?:src|data-src)=["\x27]([^"\x27]+)',tag):
+                              v=urljoin(u,a)
+                              if v not in seen: print(v);seen.add(v)
+              except Exception as e: print(type(e).__name__,str(e))
+          PY
